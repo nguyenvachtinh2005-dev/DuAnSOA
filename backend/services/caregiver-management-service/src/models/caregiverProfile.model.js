@@ -82,7 +82,7 @@ class CaregiverProfileModel {
     const params = [];
 
     for (const field of allowedFields) {
-      if (Object.prototype.hasOwnProperty.call(data, field)) {
+      if (data[field] !== undefined) {
         updates.push(`${field} = ?`);
         params.push(data[field]);
       }

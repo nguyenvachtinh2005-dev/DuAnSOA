@@ -78,16 +78,44 @@ class CaregiverService {
     });
   }
 
+  static _normalizeUpdateProfileInput(data = {}) {
+    const normalized = {};
+
+    if (data.introduction !== undefined) {
+      normalized.introduction =
+        data.introduction === null ? null : String(data.introduction).trim();
+    }
+
+    if (data.qualification !== undefined) {
+      normalized.qualification =
+        data.qualification === null ? null : String(data.qualification).trim();
+    }
+
+    if (data.experience_years !== undefined) {
+      if (data.experience_years === null) {
+        normalized.experience_years = null;
+      } else {
+        const years = Number(data.experience_years);
+        if (!Number.isFinite(years) || years < 0) {
+          throw new AppError('Số năm kinh nghiệm phải là số lớn hơn hoặc bằng 0', 400);
+        }
+        normalized.experience_years = years;
+      }
+    }
+
+    if (data.license_number !== undefined) {
+      normalized.license_number =
+        data.license_number === null ? null : String(data.license_number).trim();
+    }
+
+    return normalized;
+  }
+
   static async updateProfile(profileId, data, currentUser) {
     const profile = await this._getProfileOrFail(profileId);
     this._assertOwnerOrAdmin(profile, currentUser);
 
-    const payload = {
-      introduction: data.introduction,
-      qualification: data.qualification,
-      experience_years: data.experience_years,
-      license_number: data.license_number,
-    };
+    const payload = this._normalizeUpdateProfileInput(data);
 
     // Nếu người chăm sóc sửa hồ sơ sau khi bị từ chối, đưa về PENDING để duyệt lại
     if (currentUser.role !== 'ADMIN' && profile.verification_status === 'REJECTED') {
