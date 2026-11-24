@@ -1,6 +1,6 @@
 const express = require('express');
 const CaregiverController = require('../controllers/caregiverController');
-const { authenticate, authorizeRoles } = require('../middlewares/authMiddleware');
+const { authenticate, authorizeRoles } = require('../middleware/authMiddleware');
 const {
   validateIdParam,
   validateCreateProfile,

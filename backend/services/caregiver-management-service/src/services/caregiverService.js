@@ -4,7 +4,7 @@ const {
   CaregiverService: CaregiverServiceModel,
   CaregiverServiceArea,
 } = require('../models');
-const { AppError } = require('../middlewares/errorMiddleware');
+const { AppError } = require('../middleware/errorMiddleware');
 
 class CaregiverService {
   static async _getProfileOrFail(profileId) {

@@ -1,4 +1,4 @@
-const { AppError } = require('../middlewares/errorMiddleware');
+const { AppError } = require('../middleware/errorMiddleware');
 
 const VERIFICATION_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'];
 
