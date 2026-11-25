@@ -1,0 +1,123 @@
+{
+  "info": {
+    "name": "SOA Homecare - Schedule Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3005"
+    },
+    {
+      "key": "token",
+      "value": "PASTE_ACCESS_TOKEN_HERE"
+    },
+    {
+      "key": "scheduleId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "List my schedules",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/schedules"
+      }
+    },
+    {
+      "name": "Create my schedule (CAREGIVER)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"work_date\": \"2026-12-01\",\n  \"start_time\": \"08:00:00\",\n  \"end_time\": \"12:00:00\",\n  \"schedule_status\": \"AVAILABLE\",\n  \"note\": \"Ca sáng\"\n}"
+        },
+        "url": "{{baseUrl}}/api/schedules"
+      }
+    },
+    {
+      "name": "Get schedule by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/schedules/{{scheduleId}}"
+      }
+    },
+    {
+      "name": "Update schedule",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"schedule_status\": \"UNAVAILABLE\",\n  \"note\": \"Nghỉ phép\"\n}"
+        },
+        "url": "{{baseUrl}}/api/schedules/{{scheduleId}}"
+      }
+    },
+    {
+      "name": "Delete schedule",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/schedules/{{scheduleId}}"
+      }
+    },
+    {
+      "name": "Admin - list schedules by caregiver_profiles.id",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/schedules?caregiver_id=1"
+      }
+    }
+  ]
+}
