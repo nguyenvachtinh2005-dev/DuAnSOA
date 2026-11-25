@@ -1,0 +1,19 @@
+<div class="admin-shell">
+  <app-header
+    [brandTitle]="brandTitle"
+    userName="Quản trị viên"
+    userRole="Quản trị viên"
+    (menuToggle)="onToggleSidebar()"
+  />
+
+  <div class="admin-body">
+    <app-sidebar
+      [collapsed]="sidebarCollapsed()"
+      (logoutClick)="onLogout()"
+    />
+
+    <main class="admin-main">
+      <router-outlet />
+    </main>
+  </div>
+</div>

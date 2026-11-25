@@ -1,0 +1,19 @@
+.admin-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f6f8fa;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.admin-body {
+  flex: 1;
+  display: flex;
+  min-height: calc(100vh - 68px);
+}
+
+.admin-main {
+  flex: 1;
+  padding: 24px 28px;
+  min-width: 0;
+}

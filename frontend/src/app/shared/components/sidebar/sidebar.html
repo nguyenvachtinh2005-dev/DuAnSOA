@@ -1,0 +1,27 @@
+<aside class="app-sidebar" [class.collapsed]="collapsed()">
+  <nav class="sidebar-menu" aria-label="Điều hướng chính">
+    <a
+      *ngFor="let item of items()"
+      [routerLink]="item.route"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: !!item.exact }"
+      class="menu-link"
+      [title]="collapsed() ? item.label : ''"
+    >
+      <span class="menu-icon">{{ item.icon }}</span>
+      <span class="menu-label" *ngIf="!collapsed()">{{ item.label }}</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <button
+      type="button"
+      class="logout-action"
+      [title]="collapsed() ? 'Đăng xuất' : ''"
+      (click)="logoutClick.emit()"
+    >
+      <span class="menu-icon">↪</span>
+      <span class="menu-label" *ngIf="!collapsed()">Đăng xuất</span>
+    </button>
+  </div>
+</aside>
