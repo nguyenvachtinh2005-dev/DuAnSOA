@@ -15,11 +15,15 @@
           name="email"
           type="email"
           class="form-control"
+          [class.is-invalid]="!!emailError()"
           placeholder="Nhập địa chỉ email"
           [(ngModel)]="email"
+          (ngModelChange)="onEmailInput()"
+          (blur)="onEmailBlur()"
           autocomplete="email"
           required
         />
+        <p class="field-error" *ngIf="emailError()">{{ emailError() }}</p>
       </div>
 
       <div class="form-group">

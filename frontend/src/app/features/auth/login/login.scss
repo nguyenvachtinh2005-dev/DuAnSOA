@@ -89,6 +89,21 @@
   }
 }
 
+.form-control.is-invalid {
+  border-color: #dc2626;
+
+  &:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14);
+  }
+}
+
+.field-error {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #dc2626;
+}
+
 .password-wrapper {
   position: relative;
   display: flex;
