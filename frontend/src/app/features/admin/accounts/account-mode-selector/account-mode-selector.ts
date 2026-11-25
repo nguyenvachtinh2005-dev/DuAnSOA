@@ -34,9 +34,7 @@ export class AccountModeSelector {
   ];
 
   selectRole(role: AccountRole): void {
-    if (role !== this.selectedRole()) {
-      this.roleChange.emit(role);
-    }
+    this.roleChange.emit(role);
   }
 
   getCount(role: AccountRole): number | null {

@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, of, tap, throwError } from 'rxjs';
 import { LoginData, LoginRequest } from '../models/auth.model';
 import { ApiResponse } from '../models/api.model';
+import { findMockAdmin } from '../mocks/mock-admin.data';
 
 export type LoginApiResult = LoginData | ApiResponse<LoginData>;
 
@@ -12,12 +13,42 @@ export type LoginApiResult = LoginData | ApiResponse<LoginData>;
 export class Auth {
   private http = inject(HttpClient);
 
+  private readonly enableMockAdmin = true;
+
   // Port 3001 theo Authentication Service trong soa_homecare_db (hoặc đổi sang URL gateway)
   private readonly apiUrl = 'http://localhost:3001/api/auth';
   private readonly tokenKey = 'soa_admin_token';
   private readonly roleKey = 'soa_admin_role';
 
   login(payload: LoginRequest): Observable<LoginApiResult> {
+    if (this.enableMockAdmin) {
+      const mockAdmin = findMockAdmin(payload.email, payload.password);
+      if (!mockAdmin) {
+        return throwError(() => ({
+          error: { message: 'Email hoặc mật khẩu không chính xác.' },
+        }));
+      }
+
+      this.setSession(mockAdmin.token, mockAdmin.role);
+
+      const mockResponse: ApiResponse<LoginData> = {
+        success: true,
+        message: 'Đăng nhập mock thành công',
+        data: {
+          token: mockAdmin.token,
+          role: mockAdmin.role,
+          user: {
+            id: mockAdmin.id,
+            email: mockAdmin.email,
+            fullName: mockAdmin.fullName,
+            role: mockAdmin.role,
+            account_status: mockAdmin.status,
+          },
+        } as LoginData,
+      };
+
+      return of(mockResponse);
+    }
     return this.http.post<LoginApiResult>(`${this.apiUrl}/login`, payload).pipe(
       tap((res) => {
         const data = this.extractLoginData(res);

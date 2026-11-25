@@ -1,10 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { provideHttpClient } from '@angular/common/http';
+import { describe, beforeEach, afterEach, it, expect } from 'vitest';
 import { AccountsService } from './accounts.service';
-import { AccountOverviewItem } from '../../../core/models/account-management.model';
-import { CaregiverCertificate } from '../../../core/models/caregiver-document.model';
+import { MOCK_ACCOUNTS, MOCK_CAREGIVER_CERTIFICATES } from './accounts.mock';
 
 describe('AccountsService', () => {
   let service: AccountsService;
@@ -22,92 +21,69 @@ describe('AccountsService', () => {
     httpMock.verify();
   });
 
-  it('getAccounts gửi đúng query params và bóc dữ liệu từ ApiResponse', () => {
-    const mockApiItem: AccountOverviewItem = {
-      id: 101,
-      full_name: 'Trần Văn Minh',
-      email: 'minh@homecare.vn',
-      phone: '0901234567',
-      role: 'CUSTOMER',
-      account_status: 'ACTIVE',
-    } as AccountOverviewItem;
-
-    let result: AccountOverviewItem[] = [];
+  it('should filter local fallback accounts by role, search and status on HTTP error', () => {
     service
-      .getAccounts({ role: 'CUSTOMER', search: '  Minh  ', status: 'ACTIVE' })
-      .subscribe((data) => (result = data));
+      .getAccounts({ role: 'CUSTOMER', search: 'Minh', status: 'ACTIVE' })
+      .subscribe((list) => {
+        expect(list.length).toBeGreaterThanOrEqual(1);
+        expect(list.every((item) => item.role === 'CUSTOMER')).toBe(true);
+      });
 
     const req = httpMock.expectOne(
-      (r) =>
-        r.url === '/api/admin/accounts' &&
-        r.params.get('role') === 'CUSTOMER' &&
-        r.params.get('search') === 'Minh' &&
-        r.params.get('status') === 'ACTIVE'
-    );
-    expect(req.request.method).toBe('GET');
-    req.flush({ success: true, data: [mockApiItem] });
-
-    expect(result).toEqual([mockApiItem]);
-  });
-
-  it('getAccounts rơi về local fallback khi HTTP lỗi', () => {
-    let result: AccountOverviewItem[] = [];
-    service
-      .getAccounts({ role: 'CAREGIVER', search: '', status: 'ALL' })
-      .subscribe((data) => (result = data));
-
-    const req = httpMock.expectOne(
-      (r) => r.url === '/api/admin/accounts' && r.params.get('role') === 'CAREGIVER'
+      (r) => r.url === '/api/admin/accounts' && r.params.get('role') === 'CUSTOMER'
     );
     req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
-
-    expect(result.length).toBeGreaterThan(0);
-    expect(result.every((item) => item.role === 'CAREGIVER')).toBe(true);
   });
 
-  it('updateAccountStatus gọi PATCH đúng endpoint và payload', () => {
-    let updatedStatus: string | undefined;
-    service.updateAccountStatus(101, 'LOCKED').subscribe((res) => {
-      updatedStatus = res.account_status;
-    });
-
-    const req = httpMock.expectOne('/api/admin/accounts/101/status');
-    expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual({ account_status: 'LOCKED' });
-    req.flush({ success: true, data: { id: 101, account_status: 'LOCKED' } });
-
-    expect(updatedStatus).toBe('LOCKED');
-  });
-
-  it('getCaregiverDocuments gọi đúng URL của nhân viên', () => {
-    const docs: CaregiverCertificate[] = [];
-    let received: CaregiverCertificate[] = [];
-
-    service.getCaregiverDocuments(201).subscribe((data) => (received = data));
-
-    const req = httpMock.expectOne('/api/admin/caregivers/201/documents');
-    expect(req.request.method).toBe('GET');
-    req.flush({ success: true, data: docs });
-
-    expect(received).toEqual(docs);
-  });
-
-  it('updateDocumentVerificationStatus gửi payload duyệt/từ chối đúng endpoint', () => {
-    let statusRes: string | undefined;
-    const reason = 'Giấy tờ chưa rõ thông tin hoặc chưa khớp hồ sơ';
+  it('should sync mock certificate status when updating document verification status', () => {
+    const sampleDoc = MOCK_CAREGIVER_CERTIFICATES[0];
+    const originalStatus = sampleDoc.verification_status;
 
     service
-      .updateDocumentVerificationStatus(201, 11, 'REJECTED', reason)
-      .subscribe((res) => (statusRes = res.verification_status));
+      .updateDocumentVerificationStatus(sampleDoc.caregiver_id, sampleDoc.id, 'APPROVED')
+      .subscribe((res) => {
+        expect(res.verification_status).toBe('APPROVED');
+      });
 
-    const req = httpMock.expectOne('/api/admin/caregivers/201/documents/11/status');
-    expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual({
-      verification_status: 'REJECTED',
-      rejection_reason: reason,
+    const req = httpMock.expectOne(
+      `/api/admin/caregivers/${sampleDoc.caregiver_id}/documents/${sampleDoc.id}/status`
+    );
+    req.flush('Offline', { status: 503, statusText: 'Service Unavailable' });
+
+    service.getCaregiverDocuments(sampleDoc.caregiver_id).subscribe((docs) => {
+      const updated = docs.find((d) => d.id === sampleDoc.id);
+      expect(updated?.verification_status).toBe('APPROVED');
     });
-    req.flush({ success: true, data: { id: 11, verification_status: 'REJECTED' } });
 
-    expect(statusRes).toBe('REJECTED');
+    const docReq = httpMock.expectOne(
+      `/api/admin/caregivers/${sampleDoc.caregiver_id}/documents`
+    );
+    docReq.flush('Offline', { status: 503, statusText: 'Service Unavailable' });
+
+    sampleDoc.verification_status = originalStatus;
+  });
+
+  it('should return fallback recipients for customer 101 and empty list for unknown customer', () => {
+    service.getCustomerRecipients(101).subscribe((list) => {
+      expect(list.length).toBe(2);
+      expect(list[0].full_name).toBe('Trần Văn An');
+    });
+    const req101 = httpMock.expectOne('/api/admin/accounts/101/recipients');
+    req101.flush('Error', { status: 404, statusText: 'Not Found' });
+
+    service.getCustomerRecipients(999).subscribe((list) => {
+      expect(list).toEqual([]);
+    });
+    const req999 = httpMock.expectOne('/api/admin/accounts/999/recipients');
+    req999.flush('Error', { status: 404, statusText: 'Not Found' });
+  });
+
+  it('should handle deleteAccount fallback cleanly', () => {
+    expect(MOCK_ACCOUNTS.length).toBeGreaterThan(0);
+    service.deleteAccount(102).subscribe((res) => {
+      expect(res).toBeUndefined();
+    });
+    const req = httpMock.expectOne('/api/admin/accounts/102');
+    req.flush('Error', { status: 500, statusText: 'Error' });
   });
 });

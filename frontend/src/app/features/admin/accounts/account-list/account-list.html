@@ -1,4 +1,4 @@
-<section class="account-list">
+<section class="account-list account-page">
   @if (!activeRole()) {
     <app-account-mode-selector
       [selectedRole]="'CUSTOMER'"
@@ -18,10 +18,104 @@
       </button>
     </div>
 
+    <header class="page-head">
+      <div>
+        <h1>
+          {{ activeRole() === 'CUSTOMER' ? 'Tài khoản khách hàng' : 'Tài khoản nhân viên chăm sóc y tế' }}
+        </h1>
+        <p>
+          {{
+            activeRole() === 'CUSTOMER'
+              ? 'Danh sách tài khoản khách hàng và chi tiết hồ sơ'
+              : 'Danh sách nhân viên chăm sóc y tế, thông tin hồ sơ và chứng chỉ'
+          }}
+        </p>
+      </div>
+    </header>
+
+    <div class="filters">
+      <input
+        type="search"
+        [placeholder]="
+          activeRole() === 'CUSTOMER'
+            ? 'Tìm theo tên, email hoặc số điện thoại...'
+            : 'Tìm theo tên nhân viên...'
+        "
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchInput($event)"
+      />
+      <select
+        aria-label="Lọc trạng thái tài khoản"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="onStatusFilterChange($event)"
+      >
+        <option value="ALL">Tất cả trạng thái</option>
+        <option value="ACTIVE">ACTIVE</option>
+        <option value="PENDING">PENDING</option>
+        <option value="LOCKED">LOCKED</option>
+      </select>
+    </div>
+
+    @if (loading()) {
+      <p>Đang tải danh sách tài khoản...</p>
+    } @else if (accounts().length === 0) {
+      <p>Không có tài khoản phù hợp.</p>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Tên</th>
+            <th>Trạng thái</th>
+            <th>Hồ sơ</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of accounts(); track item.id) {
+            <tr>
+              <td>#{{ item.id }}</td>
+              <td><strong>{{ item.full_name }}</strong></td>
+              <td>
+                <span
+                  class="status-badge"
+                  [class.status-badge--active]="item.account_status === 'ACTIVE'"
+                  [class.status-badge--pending]="item.account_status === 'PENDING'"
+                  [class.status-badge--locked]="item.account_status === 'LOCKED'"
+                >
+                  {{ item.account_status }}
+                </span>
+              </td>
+              <td>
+                <button
+                  type="button"
+                  class="btn-action-smooth"
+                  [class.btn-action-smooth--danger]="hasPendingDocument(item.id)"
+                  (click)="openProfile(item)"
+                >
+                  {{ hasPendingDocument(item.id) ? 'Cần duyệt' : 'Xem' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
     @if (activeRole() === 'CUSTOMER') {
-      <app-customer-accounts />
+      <app-customer-accounts
+        [customer]="selectedCustomer()"
+        (closed)="selectedCustomer.set(null)"
+        (accountUpdated)="onAccountUpdated($event)"
+        (accountRemoved)="onAccountRemoved($event)"
+      />
     } @else if (activeRole() === 'CAREGIVER') {
-      <app-caregiver-accounts />
+      <app-caregiver-accounts
+        [caregiver]="selectedCaregiver()"
+        (closed)="selectedCaregiver.set(null)"
+        (accountUpdated)="onAccountUpdated($event)"
+        (accountRemoved)="onAccountRemoved($event)"
+        (pendingChanged)="onCaregiverPendingChanged($event)"
+      />
     }
   }
 </section>

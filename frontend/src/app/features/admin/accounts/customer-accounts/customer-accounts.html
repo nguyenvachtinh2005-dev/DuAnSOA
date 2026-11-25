@@ -1,65 +1,88 @@
-<section class="account-page">
-  <header class="page-head">
-    <div>
-      <h1>Tài khoản khách hàng</h1>
-      <p>Danh sách tài khoản thường và số hồ sơ người được chăm sóc</p>
-    </div>
-  </header>
+@if (customer(); as item) {
+  <div class="doc-modal-backdrop" (click)="close()">
+    <div class="doc-modal" (click)="$event.stopPropagation()">
+      <div class="doc-modal__head">
+        <div>
+          <h3>Hồ sơ khách hàng: {{ item.full_name }}</h3>
+          <p>Mã tài khoản #{{ item.id }}</p>
+        </div>
+        <button type="button" class="doc-modal__close" (click)="close()">×</button>
+      </div>
 
-  <div class="filters">
-    <input
-      type="search"
-      placeholder="Tìm theo tên, email hoặc số điện thoại..."
-      [ngModel]="searchQuery()"
-      (ngModelChange)="onSearchInput($event)"
-    />
-    <select
-      aria-label="Lọc trạng thái tài khoản khách hàng"
-      [ngModel]="statusFilter()"
-      (ngModelChange)="statusFilter.set($event); loadCustomers()"
-    >
-      <option value="ALL">Tất cả trạng thái</option>
-      <option value="ACTIVE">ACTIVE</option>
-      <option value="LOCKED">LOCKED</option>
-      <option value="PENDING">PENDING</option>
-    </select>
-  </div>
+      <div class="profile-form-grid">
+        <label>
+          <span>Họ và tên</span>
+          <input
+            type="text"
+            [ngModel]="editFullName()"
+            (ngModelChange)="editFullName.set($event)"
+          />
+        </label>
+        <label>
+          <span>Email</span>
+          <input
+            type="email"
+            [ngModel]="editEmail()"
+            (ngModelChange)="editEmail.set($event)"
+          />
+        </label>
+        <label>
+          <span>Số điện thoại</span>
+          <input
+            type="text"
+            [ngModel]="editPhone()"
+            (ngModelChange)="editPhone.set($event)"
+          />
+        </label>
+      </div>
 
-  @if (loading()) {
-    <p>Đang tải danh sách khách hàng...</p>
-  } @else if (customers().length === 0) {
-    <p>Không có tài khoản khách hàng phù hợp.</p>
-  } @else {
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Khách hàng</th>
-          <th>Số điện thoại</th>
-          <th>Người được chăm sóc</th>
-          <th>Trạng thái</th>
-          <th>Thao tác</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (item of customers(); track item.id) {
-          <tr>
-            <td>#{{ item.id }}</td>
-            <td>
-              <div><strong>{{ item.full_name }}</strong></div>
-              <small>{{ item.email }}</small>
-            </td>
-            <td>{{ item.phone || '—' }}</td>
-            <td>{{ item.recipients_count ?? 0 }} người</td>
-            <td>{{ item.account_status }}</td>
-            <td>
-              <button type="button" (click)="toggleStatus(item)">
-                {{ item.account_status === 'ACTIVE' ? 'Khóa' : 'Kích hoạt' }}
-              </button>
-            </td>
-          </tr>
+      <div class="profile-detail">
+        <div>
+          <span>Trạng thái tài khoản:</span>
+          <span
+            class="status-badge"
+            [class.status-badge--active]="item.account_status === 'ACTIVE'"
+            [class.status-badge--pending]="item.account_status === 'PENDING'"
+            [class.status-badge--locked]="item.account_status === 'LOCKED'"
+          >
+            {{ item.account_status }}
+          </span>
+        </div>
+      </div>
+
+      <app-care-recipients
+        [recipients]="recipients()"
+        [loading]="loadingRecipients()"
+        (recipientUpdated)="onRecipientUpdated($event)"
+        (recipientDeleted)="onRecipientDeleted($event)"
+      />
+
+      <div class="doc-modal__footer">
+        <button type="button" class="btn-action-smooth" (click)="saveProfile(item)">
+          Lưu hồ sơ
+        </button>
+        @if (item.account_status === 'LOCKED') {
+          <button type="button" class="btn-action-smooth" (click)="toggleLock(item)">
+            Mở khoá tài khoản
+          </button>
+          <button
+            type="button"
+            class="btn-action-smooth btn-action-smooth--danger"
+            (click)="deleteLocked(item)"
+          >
+            Xoá tài khoản
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="btn-action-smooth btn-action-smooth--danger"
+            (click)="toggleLock(item)"
+          >
+            Khoá tài khoản
+          </button>
         }
-      </tbody>
-    </table>
-  }
-</section>
+        <button type="button" class="btn-action-smooth" (click)="close()">Đóng</button>
+      </div>
+    </div>
+  </div>
+}

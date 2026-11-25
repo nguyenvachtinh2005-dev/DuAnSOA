@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, beforeEach, it, expect, vi } from 'vitest';
 import { AccountModeSelector } from './account-mode-selector';
 
 describe('AccountModeSelector', () => {
@@ -9,23 +9,27 @@ describe('AccountModeSelector', () => {
     }).compileComponents();
   });
 
-  it('phát sự kiện roleChange khi chọn vai trò khác vai trò đang chọn', () => {
+  it('should create and expose CUSTOMER and CAREGIVER options', () => {
     const fixture = TestBed.createComponent(AccountModeSelector);
-    fixture.componentRef.setInput('selectedRole', 'CUSTOMER');
-    const spy = vi.fn();
-    fixture.componentInstance.roleChange.subscribe(spy);
-
-    fixture.componentInstance.selectRole('CAREGIVER');
-    expect(spy).toHaveBeenCalledWith('CAREGIVER');
+    const comp = fixture.componentInstance;
+    expect(comp.options.map((o) => o.role)).toEqual(['CUSTOMER', 'CAREGIVER']);
   });
 
-  it('không phát lặp lại roleChange khi bấm đúng vai trò đang được chọn', () => {
+  it('should emit roleChange when selectRole is called', () => {
     const fixture = TestBed.createComponent(AccountModeSelector);
-    fixture.componentRef.setInput('selectedRole', 'CUSTOMER');
-    const spy = vi.fn();
-    fixture.componentInstance.roleChange.subscribe(spy);
+    const comp = fixture.componentInstance;
+    const emitSpy = vi.fn();
+    comp.roleChange.subscribe(emitSpy);
 
-    fixture.componentInstance.selectRole('CUSTOMER');
-    expect(spy).not.toHaveBeenCalled();
+    comp.selectRole('CAREGIVER');
+    expect(emitSpy).toHaveBeenCalledWith('CAREGIVER');
+  });
+
+  it('should return matching count for selected role', () => {
+    const fixture = TestBed.createComponent(AccountModeSelector);
+    fixture.componentRef.setInput('customerCount', 12);
+    fixture.componentRef.setInput('caregiverCount', 5);
+    expect(fixture.componentInstance.getCount('CUSTOMER')).toBe(12);
+    expect(fixture.componentInstance.getCount('CAREGIVER')).toBe(5);
   });
 });

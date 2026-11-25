@@ -15,6 +15,7 @@ import {
 } from '../../../core/models/caregiver-document.model';
 import { ApiResponse } from '../../../core/models/api.model';
 import { MOCK_ACCOUNTS, MOCK_CAREGIVER_CERTIFICATES } from './accounts.mock';
+import { CareRecipientItem } from '../../../core/models/account-management.model';
 
 @Injectable({ providedIn: 'root' })
 export class AccountsService {
@@ -83,9 +84,29 @@ export class AccountsService {
         payload
       )
       .pipe(
-        map((res) => res.data ?? { id: documentId, verification_status: verificationStatus }),
-        catchError(() => of({ id: documentId, verification_status: verificationStatus }))
+        map((res) => {
+          const result = res.data ?? { id: documentId, verification_status: verificationStatus };
+          this.syncMockCertificateStatus(caregiverId, documentId, result.verification_status);
+          return result;
+        }),
+        catchError(() => {
+          this.syncMockCertificateStatus(caregiverId, documentId, verificationStatus);
+          return of({ id: documentId, verification_status: verificationStatus });
+        })
       );
+  }
+
+  private syncMockCertificateStatus(
+    caregiverId: number,
+    documentId: number,
+    status: VerificationStatus
+  ): void {
+    const target = MOCK_CAREGIVER_CERTIFICATES.find(
+      (doc) => doc.caregiver_id === caregiverId && doc.id === documentId
+    );
+    if (target) {
+      target.verification_status = status;
+    }
   }
 
   private filterLocalFallback(filter: AccountQueryFilter): AccountOverviewItem[] {
@@ -101,5 +122,50 @@ export class AccountsService {
         (item.phone ?? '').toLowerCase().includes(keyword);
       return matchRole && matchStatus && matchKeyword;
     });
+  }
+
+  deleteAccount(accountId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${accountId}`).pipe(
+      catchError(() => of(void 0))
+    );
+  }
+
+  getCustomerRecipients(customerId: number): Observable<CareRecipientItem[]> {
+    const fallback: CareRecipientItem[] =
+      customerId === 101
+        ? [
+            {
+              id: 1,
+              customer_id: 101,
+              full_name: 'Trần Văn An',
+              relationship: 'Cha',
+              date_of_birth: '1950-04-12',
+              gender: 'MALE',
+              medical_notes: 'Tăng huyết áp nhẹ, cần kiểm tra định kỳ',
+              emergency_contact_name: 'Trần Văn Minh',
+              emergency_contact_phone: '0905123456',
+            },
+            {
+              id: 2,
+              customer_id: 101,
+              full_name: 'Nguyễn Thị Hoa',
+              relationship: 'Mẹ',
+              date_of_birth: '1954-09-21',
+              gender: 'FEMALE',
+              medical_notes: 'Đau khớp gối',
+              emergency_contact_name: 'Trần Văn Minh',
+              emergency_contact_phone: '0905123456',
+            },
+          ]
+        : [];
+
+    return this.http
+      .get<ApiResponse<CareRecipientItem[]> | CareRecipientItem[]>(
+        `${this.baseUrl}/${customerId}/recipients`
+      )
+      .pipe(
+        map((res) => (Array.isArray(res) ? res : res.data ?? [])),
+        catchError(() => of(fallback))
+      );
   }
 }

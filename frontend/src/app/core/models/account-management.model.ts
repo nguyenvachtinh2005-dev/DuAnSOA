@@ -39,3 +39,21 @@ export interface AccountStatusUpdateResult {
   id: number;
   account_status: AccountStatus;
 }
+
+export interface CareRecipientItem {
+  id: number;
+  customer_id: number;
+  full_name: string;
+  relationship: string;
+  date_of_birth: string | null;
+  gender: 'MALE' | 'FEMALE' | 'OTHER' | null;
+  medical_notes: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+}
+
+export interface CustomerProfileUpdatePayload {
+  full_name: string;
+  email: string;
+  phone: string | null;
+}

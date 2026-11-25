@@ -1,11 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  AccountOverviewItem,
-  AccountStatus,
-  VerificationStatus,
-} from '../../../../core/models/account-management.model';
+import { AccountOverviewItem, AccountStatus } from '../../../../core/models/account-management.model';
 import { CaregiverCertificate } from '../../../../core/models/caregiver-document.model';
 import { AccountsService } from '../accounts.service';
 
@@ -19,80 +15,123 @@ import { AccountsService } from '../accounts.service';
 export class CaregiverAccounts {
   private readonly accountsService = inject(AccountsService);
 
-  readonly caregivers = signal<AccountOverviewItem[]>([]);
-  readonly searchQuery = signal<string>('');
-  readonly statusFilter = signal<AccountStatus | 'ALL'>('ALL');
+  readonly caregiver = input<AccountOverviewItem | null>(null);
+  readonly closed = output<void>();
+  readonly accountUpdated = output<AccountOverviewItem>();
+  readonly accountRemoved = output<number>();
+  readonly pendingChanged = output<{ caregiverId: number; hasPending: boolean }>();
 
-  readonly selectedCaregiver = signal<AccountOverviewItem | null>(null);
-  readonly certificates = signal<CaregiverCertificate[]>([]);
-
-  readonly filteredCaregivers = computed(() => {
-    const keyword = this.searchQuery().trim().toLowerCase();
-    const status = this.statusFilter();
-
-    return this.caregivers().filter((item) => {
-      const matchStatus = status === 'ALL' || item.account_status === status;
-      const matchKeyword =
-        !keyword ||
-        item.full_name.toLowerCase().includes(keyword) ||
-        item.email.toLowerCase().includes(keyword) ||
-        (item.phone ?? '').toLowerCase().includes(keyword) ||
-        (item.license_number ?? '').toLowerCase().includes(keyword);
-      return matchStatus && matchKeyword;
-    });
-  });
+  readonly documents = signal<CaregiverCertificate[]>([]);
+  readonly editFullName = signal('');
+  readonly editEmail = signal('');
+  readonly editPhone = signal('');
+  readonly editQualification = signal('');
+  readonly editLicenseNumber = signal('');
+  readonly editExperienceYears = signal(0);
 
   constructor() {
-    this.loadCaregivers();
+    effect(() => {
+      const current = this.caregiver();
+      if (!current) {
+        this.documents.set([]);
+        return;
+      }
+
+      this.editFullName.set(current.full_name ?? '');
+      this.editEmail.set(current.email ?? '');
+      this.editPhone.set(current.phone ?? '');
+      this.editQualification.set(current.qualification ?? '');
+      this.editLicenseNumber.set(current.license_number ?? '');
+      this.editExperienceYears.set(current.experience_years ?? 0);
+
+      this.accountsService.getCaregiverDocuments(current.id).subscribe((docs) => {
+        this.documents.set(docs);
+        this.pendingChanged.emit({
+          caregiverId: current.id,
+          hasPending: docs.some((d) => d.verification_status !== 'APPROVED'),
+        });
+      });
+    });
   }
 
-  loadCaregivers(): void {
+  close(): void {
+    this.closed.emit();
+  }
+
+  saveProfile(item: AccountOverviewItem): void {
+    const updated: AccountOverviewItem = {
+      ...item,
+      full_name: this.editFullName().trim(),
+      email: this.editEmail().trim(),
+      phone: this.editPhone().trim() || null,
+      qualification: this.editQualification().trim() || null,
+      license_number: this.editLicenseNumber().trim() || null,
+      experience_years: Math.max(0, Number(this.editExperienceYears()) || 0),
+    };
+    this.accountUpdated.emit(updated);
+  }
+
+  changeStatus(item: AccountOverviewItem, nextStatus: AccountStatus): void {
+    if (nextStatus === 'LOCKED' && !window.confirm(`Xác nhận khoá tài khoản "${item.full_name}"?`)) {
+      return;
+    }
+
+    this.accountsService.updateAccountStatus(item.id, nextStatus).subscribe((res) => {
+      this.accountUpdated.emit({ ...item, account_status: res.account_status });
+    });
+  }
+
+  cancelAccount(item: AccountOverviewItem): void {
+    if (!window.confirm(`Xác nhận huỷ tài khoản "${item.full_name}"?`)) {
+      return;
+    }
+
+    this.accountsService.deleteAccount(item.id).subscribe(() => {
+      this.accountRemoved.emit(item.id);
+    });
+  }
+
+  approveDoc(item: AccountOverviewItem, doc: CaregiverCertificate): void {
+    if (doc.verification_status !== 'PENDING') {
+      return;
+    }
+    if (!window.confirm(`Xác nhận duyệt chứng chỉ "${doc.document_name}" của ${item.full_name}?`)) {
+      return;
+    }
+
     this.accountsService
-      .getAccounts({
-        role: 'CAREGIVER',
-        search: this.searchQuery(),
-        status: this.statusFilter(),
-      })
-      .subscribe((list) => this.caregivers.set(list));
-  }
-
-  openCertificatesPopup(caregiver: AccountOverviewItem): void {
-    this.selectedCaregiver.set(caregiver);
-    this.certificates.set([]);
-
-    this.accountsService
-      .getCaregiverDocuments(caregiver.id)
-      .subscribe((docs) => this.certificates.set(docs));
-  }
-
-  closeCertificatesPopup(): void {
-    this.selectedCaregiver.set(null);
-    this.certificates.set([]);
-  }
-
-  updateCertificateStatus(documentId: number, nextStatus: VerificationStatus): void {
-    const caregiver = this.selectedCaregiver();
-    if (!caregiver) return;
-
-    const reason =
-      nextStatus === 'REJECTED'
-        ? 'Giấy tờ chưa rõ thông tin hoặc chưa khớp hồ sơ'
-        : null;
-
-    this.accountsService
-      .updateDocumentVerificationStatus(caregiver.id, documentId, nextStatus, reason)
+      .updateDocumentVerificationStatus(item.id, doc.id, 'APPROVED')
       .subscribe((res) => {
-        this.certificates.update((list) =>
-          list.map((doc) =>
-            doc.id === documentId
-              ? {
-                  ...doc,
-                  verification_status: res.verification_status,
-                  rejection_reason: nextStatus === 'REJECTED' ? reason : null,
-                }
-              : doc
-          )
+        const nextDocs = this.documents().map((d) =>
+          d.id === doc.id ? { ...d, verification_status: res.verification_status } : d
         );
+        this.documents.set(nextDocs);
+        this.pendingChanged.emit({
+          caregiverId: item.id,
+          hasPending: nextDocs.some((d) => d.verification_status === 'PENDING'),
+        });
+      });
+  }
+
+  rejectDoc(item: AccountOverviewItem, doc: CaregiverCertificate): void {
+    if (doc.verification_status === 'APPROVED' || doc.verification_status === 'REJECTED') {
+      return;
+    }
+    if (!window.confirm(`Xác nhận huỷ (từ chối) chứng chỉ "${doc.document_name}" của ${item.full_name}?`)) {
+      return;
+    }
+
+    this.accountsService
+      .updateDocumentVerificationStatus(item.id, doc.id, 'REJECTED')
+      .subscribe((res) => {
+        const nextDocs = this.documents().map((d) =>
+          d.id === doc.id ? { ...d, verification_status: res.verification_status } : d
+        );
+        this.documents.set(nextDocs);
+        this.pendingChanged.emit({
+          caregiverId: item.id,
+          hasPending: nextDocs.some((d) => d.verification_status === 'PENDING'),
+        });
       });
   }
 }

@@ -1,165 +1,130 @@
-<section class="account-page">
-  <header class="page-head">
-    <h1>Tài khoản nhân viên chăm sóc y tế</h1>
-    <p>Quản lý hồ sơ chuyên môn, trạng thái tài khoản và bằng cấp/chứng chỉ</p>
-  </header>
+@if (caregiver(); as item) {
+  <div class="doc-modal-backdrop" (click)="close()">
+    <div class="doc-modal" (click)="$event.stopPropagation()">
+      <div class="doc-modal__head">
+        <div>
+          <h3>Hồ sơ nhân viên: {{ item.full_name }}</h3>
+          <p>Mã tài khoản #{{ item.id }} · Trạng thái: <strong>{{ item.account_status }}</strong></p>
+        </div>
+        <button type="button" class="doc-modal__close" (click)="close()">×</button>
+      </div>
 
-  <div class="filters">
-    <input
-      type="text"
-      placeholder="Tìm theo tên, email hoặc số điện thoại..."
-      [ngModel]="searchQuery()"
-      (ngModelChange)="searchQuery.set($event)"
-    />
-    <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
-      <option value="ALL">Tất cả trạng thái</option>
-      <option value="ACTIVE">ACTIVE</option>
-      <option value="LOCKED">LOCKED</option>
-      <option value="PENDING">PENDING</option>
-    </select>
-  </div>
+      <div class="profile-form-grid">
+        <label>
+          <span>Họ và tên</span>
+          <input type="text" [ngModel]="editFullName()" (ngModelChange)="editFullName.set($event)" />
+        </label>
+        <label>
+          <span>Email</span>
+          <input type="email" [ngModel]="editEmail()" (ngModelChange)="editEmail.set($event)" />
+        </label>
+        <label>
+          <span>Số điện thoại</span>
+          <input type="text" [ngModel]="editPhone()" (ngModelChange)="editPhone.set($event)" />
+        </label>
+        <label>
+          <span>Trình độ</span>
+          <input type="text" [ngModel]="editQualification()" (ngModelChange)="editQualification.set($event)" />
+        </label>
+        <label>
+          <span>Số CCHN</span>
+          <input type="text" [ngModel]="editLicenseNumber()" (ngModelChange)="editLicenseNumber.set($event)" />
+        </label>
+        <label>
+          <span>Kinh nghiệm (năm)</span>
+          <input type="number" min="0" [ngModel]="editExperienceYears()" (ngModelChange)="editExperienceYears.set(+$event)" />
+        </label>
+      </div>
 
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Nhân viên</th>
-        <th>Trình độ / CCHN</th>
-        <th>Kinh nghiệm</th>
-        <th>Trạng thái TK</th>
-        <th>Bằng cấp &amp; Chứng chỉ</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (item of filteredCaregivers(); track item.id) {
-        <tr>
-          <td>#{{ item.id }}</td>
-          <td>
-            <div><strong>{{ item.full_name }}</strong></div>
-            <div class="sub-text">{{ item.email }} · {{ item.phone ?? '—' }}</div>
-          </td>
-          <td>
-            <div>{{ item.qualification ?? '—' }}</div>
-            <div class="sub-text">{{ item.license_number ?? '—' }}</div>
-          </td>
-          <td>{{ item.experience_years ?? 0 }} năm</td>
-          <td>
-            <span class="status-badge" [attr.data-status]="item.account_status">
-              {{ item.account_status }}
-            </span>
-          </td>
-          <td>
-            <button
-              type="button"
-              class="btn-view-cert"
-              (click)="openCertificatesPopup(item)"
-            >
-              Xem
-            </button>
-          </td>
-        </tr>
-      }
-    </tbody>
-  </table>
-
-  @if (selectedCaregiver(); as caregiver) {
-    <div
-      class="cert-modal-backdrop"
-      role="dialog"
-      aria-modal="true"
-      [attr.aria-label]="'Chi tiết bằng cấp và chứng chỉ của ' + caregiver.full_name"
-      (click)="closeCertificatesPopup()"
-    >
-      <div class="cert-modal" (click)="$event.stopPropagation()">
-        <div class="cert-modal__header">
-          <div>
-            <h2 class="cert-modal__title">Bằng cấp &amp; chứng chỉ: {{ caregiver.full_name }}</h2>
-            <p class="cert-modal__meta">
-              {{ caregiver.qualification ?? 'Chưa cập nhật trình độ' }} ·
-              {{ caregiver.license_number ?? 'Chưa có CCHN' }} ·
-              {{ caregiver.experience_years ?? 0 }} năm kinh nghiệm
-            </p>
-          </div>
+      <div class="status-actions-bar">
+        @if (item.account_status !== 'ACTIVE') {
+          <button type="button" class="btn-action-smooth" (click)="changeStatus(item, 'ACTIVE')">
+            Chuyển sang ACTIVE
+          </button>
+        }
+        @if (item.account_status === 'ACTIVE') {
           <button
             type="button"
-            class="cert-modal__close"
-            (click)="closeCertificatesPopup()"
-            aria-label="Đóng popup"
+            class="btn-action-smooth btn-action-smooth--danger"
+            (click)="changeStatus(item, 'LOCKED')"
           >
-            ✕
+            Khoá tài khoản
           </button>
-        </div>
+        }
+        @if (item.account_status === 'PENDING' || item.account_status === 'LOCKED') {
+          <button
+            type="button"
+            class="btn-action-smooth btn-action-smooth--danger"
+            (click)="cancelAccount(item)"
+          >
+            Huỷ tài khoản
+          </button>
+        }
+        <button type="button" class="btn-action-smooth" (click)="saveProfile(item)">
+          Lưu hồ sơ
+        </button>
+      </div>
 
-        <div class="cert-modal__body">
-          @if (certificates().length === 0) {
-            <p class="cert-modal__empty">Nhân viên này chưa có bằng cấp hoặc chứng chỉ nào.</p>
-          } @else {
-            <table class="data-table cert-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Loại giấy tờ</th>
-                  <th>Tên bằng cấp / chứng chỉ</th>
-                  <th>Trạng thái xác minh</th>
-                  <th>Tài liệu</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (cert of certificates(); track cert.id) {
-                  <tr>
-                    <td>#{{ cert.id }}</td>
-                    <td>{{ cert.document_type }}</td>
-                    <td>
-                      <div><strong>{{ cert.document_name }}</strong></div>
-                      @if (cert.rejection_reason) {
-                        <div class="reject-reason">Lý do từ chối: {{ cert.rejection_reason }}</div>
-                      }
-                    </td>
-                    <td>
-                      <span class="verify-badge" [attr.data-verify]="cert.verification_status">
-                        {{ cert.verification_status }}
-                      </span>
-                    </td>
-                    <td>
-                      <a
-                        class="doc-link"
-                        [href]="cert.document_url"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Mở tệp
-                      </a>
-                    </td>
-                    <td class="action-group">
-                      <button
-                        type="button"
-                        class="btn-pill btn-approve"
-                        (click)="updateCertificateStatus(cert.id, 'APPROVED')"
-                      >
-                        Duyệt
-                      </button>
-                      <button
-                        type="button"
-                        class="btn-pill btn-reject"
-                        (click)="updateCertificateStatus(cert.id, 'REJECTED')"
-                      >
-                        Từ chối
-                      </button>
-                    </td>
-                  </tr>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Loại giấy tờ</th>
+            <th>Tên chứng chỉ</th>
+            <th>Trạng thái xác minh</th>
+            <th>Tài liệu</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (doc of documents(); track doc.id) {
+            <tr>
+              <td>#{{ doc.id }}</td>
+              <td>{{ doc.document_type }}</td>
+              <td><strong>{{ doc.document_name }}</strong></td>
+              <td>
+                <span
+                  class="status-badge"
+                  [class.status-badge--active]="doc.verification_status === 'APPROVED'"
+                  [class.status-badge--pending]="doc.verification_status === 'PENDING'"
+                  [class.status-badge--locked]="doc.verification_status === 'REJECTED'"
+                >
+                  {{ doc.verification_status === 'REJECTED' ? 'REJECT' : doc.verification_status }}
+                </span>
+              </td>
+              <td>
+                <a [href]="doc.document_url" target="_blank" rel="noopener noreferrer">Mở tệp</a>
+              </td>
+              <td>
+                @if (doc.verification_status === 'PENDING') {
+                  <div class="doc-actions">
+                    <button
+                      type="button"
+                      class="btn-doc-approve"
+                      (click)="approveDoc(item, doc)"
+                    >
+                      Duyệt
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-doc-reject"
+                      (click)="rejectDoc(item, doc)"
+                    >
+                      Huỷ
+                    </button>
+                  </div>
+                } @else {
+                  <span>{{ doc.verification_status === 'APPROVED' ? 'Đã duyệt' : 'REJECT' }}</span>
                 }
-              </tbody>
-            </table>
+              </td>
+            </tr>
           }
-        </div>
+        </tbody>
+      </table>
 
-        <div class="cert-modal__footer">
-          <button type="button" class="btn-pill btn-neutral" (click)="closeCertificatesPopup()">
-            Đóng
-          </button>
-        </div>
+      <div class="doc-modal__footer">
+        <button type="button" class="btn-action-smooth" (click)="close()">Đóng</button>
       </div>
     </div>
-  }
-</section>
+  </div>
+}
