@@ -15,6 +15,7 @@ export class Auth {
   // Port 3001 theo Authentication Service trong soa_homecare_db (hoặc đổi sang URL gateway)
   private readonly apiUrl = 'http://localhost:3001/api/auth';
   private readonly tokenKey = 'soa_admin_token';
+  private readonly roleKey = 'soa_admin_role';
 
   login(payload: LoginRequest): Observable<LoginApiResult> {
     return this.http.post<LoginApiResult>(`${this.apiUrl}/login`, payload).pipe(
@@ -26,6 +27,13 @@ export class Auth {
         }
       })
     );
+  }
+
+  setSession(token: string, role?: string): void {
+    localStorage.setItem(this.tokenKey, token);
+    if (role) {
+      localStorage.setItem(this.roleKey, role.toUpperCase());
+    }
   }
 
   extractLoginData(res: LoginApiResult): LoginData {
@@ -46,7 +54,18 @@ export class Auth {
     return localStorage.getItem(this.tokenKey);
   }
 
+  getRole(): string | null {
+    return localStorage.getItem(this.roleKey);
+  }
+
+  isAdminAuthenticated(): boolean {
+    const token = this.getToken();
+    const role = this.getRole();
+    return Boolean(token && token.trim().length > 0 && role === 'ADMIN');
+  }
+
   logout(): void {
     localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.roleKey);
   }
 }

@@ -1,0 +1,29 @@
+<div class="modal-backdrop" *ngIf="open()" (click)="onBackdropClick()">
+  <div
+    class="modal-panel"
+    [style.max-width]="maxWidth()"
+    role="dialog"
+    aria-modal="true"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="modal-header">
+      <h2 class="modal-title" *ngIf="title()">{{ title() }}</h2>
+      <button
+        type="button"
+        class="modal-close-btn"
+        aria-label="Đóng hộp thoại"
+        (click)="closed.emit()"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <ng-content />
+    </div>
+
+    <div class="modal-footer" *ngIf="showFooter()">
+      <ng-content select="[modal-footer]" />
+    </div>
+  </div>
+</div>

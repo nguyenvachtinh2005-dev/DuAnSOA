@@ -1,7 +1,7 @@
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
 import { ApiErrorResponse } from '../../../core/models/api.model';
 import { PasswordToggle } from '../../../shared/components/password-toggle/password-toggle';
@@ -17,6 +17,7 @@ import { validateEmailValue } from '../../../shared/utils/email-validator';
 export class Login implements OnDestroy {
   private auth = inject(Auth);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private typingTimer: ReturnType<typeof setTimeout> | null = null;
 
   brandTitle = 'Home Care';
@@ -95,8 +96,9 @@ export class Login implements OnDestroy {
         }
 
         const data = this.auth.extractLoginData(res);
-        const role = data.role ?? data.user?.role;
-        const accountStatus = data.user?.account_status;
+        const role = (data?.role ?? data?.user?.role ?? '').toUpperCase();
+        const accountStatus = (data?.user?.account_status ?? '').toUpperCase();
+        const token = data?.token ?? data?.accessToken ?? '';
 
         if (role && role !== 'ADMIN') {
           this.auth.logout();
@@ -110,7 +112,16 @@ export class Login implements OnDestroy {
           return;
         }
 
+        if (token) {
+          this.auth.setSession(token, role || 'ADMIN');
+        }
+
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        const targetUrl =
+          returnUrl && returnUrl.startsWith('/admin') ? returnUrl : '/admin/dashboard';
+
         console.log('Admin đăng nhập thành công:', data);
+        void this.router.navigateByUrl(targetUrl);
       },
       error: (err) => {
         this.isSubmitting.set(false);
