@@ -1,7 +1,7 @@
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
 import { ApiErrorResponse } from '../../../core/models/api.model';
 import { PasswordToggle } from '../../../shared/components/password-toggle/password-toggle';
@@ -10,7 +10,7 @@ import { validateEmailValue } from '../../../shared/utils/email-validator';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PasswordToggle],
+  imports: [CommonModule, FormsModule, PasswordToggle],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })

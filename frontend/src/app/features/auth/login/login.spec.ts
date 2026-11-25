@@ -6,36 +6,43 @@ import { Login } from './login';
 import { Auth } from '../../../core/services/auth';
 import { ApiResponse } from '../../../core/models/api.model';
 import { LoginData } from '../../../core/models/auth.model';
+import { Component } from '@angular/core';
 
 describe('Login (Admin)', () => {
   let fixture: ComponentFixture<Login>;
   let component: Login;
   let authMock: {
     login: ReturnType<typeof vi.fn>;
-    extractLoginData: ReturnType<typeof vi.fn>;
     logout: ReturnType<typeof vi.fn>;
     getToken: ReturnType<typeof vi.fn>;
+    getRole: ReturnType<typeof vi.fn>;
+    isAdminAuthenticated: ReturnType<typeof vi.fn>;
+    setSession: ReturnType<typeof vi.fn>;
+    extractLoginData: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
+    @Component({ standalone: true, template: '' })
+    class DummyDashboard {}
     localStorage.clear();
 
     authMock = {
       login: vi.fn(),
-      logout: vi.fn(() => localStorage.removeItem('soa_admin_token')),
-      getToken: vi.fn(() => localStorage.getItem('soa_admin_token')),
-      extractLoginData: vi.fn((res: LoginData | ApiResponse<LoginData>) => {
-        if (res && 'data' in res && res.data) {
-          return res.data;
-        }
-        return res as LoginData;
-      }),
+      logout: vi.fn(),
+      getToken: vi.fn().mockReturnValue(null),
+      getRole: vi.fn().mockReturnValue(null),
+      isAdminAuthenticated: vi.fn().mockReturnValue(false),
+      setSession: vi.fn(),
+      extractLoginData: vi.fn((res) => ('data' in res && res.data ? res.data : res)),
     };
 
     await TestBed.configureTestingModule({
       imports: [Login],
       providers: [
-        provideRouter([]),
+        provideRouter([
+          { path: 'admin/dashboard', component: DummyDashboard },
+          { path: 'login', component: Login },
+        ]),
         { provide: Auth, useValue: authMock },
       ],
     }).compileComponents();
