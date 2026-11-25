@@ -1,0 +1,30 @@
+# Built application files
+*.apk
+*.aab
+*.ap_
+*.dex
+*.jar
+*.war
+*.ear
+
+# Files for the Android SDK/NDK
+local.properties
+.cxx/
+
+# Gradle files
+.gradle/
+build/
+**/build/
+captures/
+.externalNativeBuild/
+
+# Android Studio & IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+
+# Keystore / Signing secrets
+*.jks
+*.keystore
