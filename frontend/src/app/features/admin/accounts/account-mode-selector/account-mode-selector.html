@@ -1,0 +1,31 @@
+<section class="account-mode-selector" aria-label="Chọn loại tài khoản cần xem">
+  <div class="selector-header">
+    <h2 class="selector-title">Chọn loại tài khoản</h2>
+    <p class="selector-subtitle">
+      Chuyển đổi giữa danh sách tài khoản khách hàng và nhân viên chăm sóc y tế
+    </p>
+  </div>
+
+  <div class="mode-grid" role="tablist" aria-label="Chế độ xem tài khoản">
+    @for (option of options; track option.role) {
+      <button
+        type="button"
+        role="tab"
+        class="mode-card"
+        [class.is-active]="selectedRole() === option.role"
+        [attr.aria-selected]="selectedRole() === option.role"
+        (click)="selectRole(option.role)"
+      >
+        <div class="mode-card__top">
+          <span class="mode-badge">{{ option.badgeText }}</span>
+          @if (getCount(option.role) !== null) {
+            <span class="mode-count">{{ getCount(option.role) }}</span>
+          }
+        </div>
+
+        <div class="mode-card__title">{{ option.label }}</div>
+        <p class="mode-card__desc">{{ option.description }}</p>
+      </button>
+    }
+  </div>
+</section>

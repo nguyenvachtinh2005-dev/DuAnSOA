@@ -1,0 +1,42 @@
+@use '../accounts-shared';
+
+.account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.account-list__topbar {
+  display: flex;
+  align-items: center;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+  }
+
+  &:active {
+    transform: translateX(-2px);
+  }
+
+  &__arrow {
+    font-size: 16px;
+    line-height: 1;
+    color: #0f766e;
+  }
+}

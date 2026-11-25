@@ -1,0 +1,165 @@
+<section class="account-page">
+  <header class="page-head">
+    <h1>Tài khoản nhân viên chăm sóc y tế</h1>
+    <p>Quản lý hồ sơ chuyên môn, trạng thái tài khoản và bằng cấp/chứng chỉ</p>
+  </header>
+
+  <div class="filters">
+    <input
+      type="text"
+      placeholder="Tìm theo tên, email hoặc số điện thoại..."
+      [ngModel]="searchQuery()"
+      (ngModelChange)="searchQuery.set($event)"
+    />
+    <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+      <option value="ALL">Tất cả trạng thái</option>
+      <option value="ACTIVE">ACTIVE</option>
+      <option value="LOCKED">LOCKED</option>
+      <option value="PENDING">PENDING</option>
+    </select>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nhân viên</th>
+        <th>Trình độ / CCHN</th>
+        <th>Kinh nghiệm</th>
+        <th>Trạng thái TK</th>
+        <th>Bằng cấp &amp; Chứng chỉ</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of filteredCaregivers(); track item.id) {
+        <tr>
+          <td>#{{ item.id }}</td>
+          <td>
+            <div><strong>{{ item.full_name }}</strong></div>
+            <div class="sub-text">{{ item.email }} · {{ item.phone ?? '—' }}</div>
+          </td>
+          <td>
+            <div>{{ item.qualification ?? '—' }}</div>
+            <div class="sub-text">{{ item.license_number ?? '—' }}</div>
+          </td>
+          <td>{{ item.experience_years ?? 0 }} năm</td>
+          <td>
+            <span class="status-badge" [attr.data-status]="item.account_status">
+              {{ item.account_status }}
+            </span>
+          </td>
+          <td>
+            <button
+              type="button"
+              class="btn-view-cert"
+              (click)="openCertificatesPopup(item)"
+            >
+              Xem
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (selectedCaregiver(); as caregiver) {
+    <div
+      class="cert-modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'Chi tiết bằng cấp và chứng chỉ của ' + caregiver.full_name"
+      (click)="closeCertificatesPopup()"
+    >
+      <div class="cert-modal" (click)="$event.stopPropagation()">
+        <div class="cert-modal__header">
+          <div>
+            <h2 class="cert-modal__title">Bằng cấp &amp; chứng chỉ: {{ caregiver.full_name }}</h2>
+            <p class="cert-modal__meta">
+              {{ caregiver.qualification ?? 'Chưa cập nhật trình độ' }} ·
+              {{ caregiver.license_number ?? 'Chưa có CCHN' }} ·
+              {{ caregiver.experience_years ?? 0 }} năm kinh nghiệm
+            </p>
+          </div>
+          <button
+            type="button"
+            class="cert-modal__close"
+            (click)="closeCertificatesPopup()"
+            aria-label="Đóng popup"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="cert-modal__body">
+          @if (certificates().length === 0) {
+            <p class="cert-modal__empty">Nhân viên này chưa có bằng cấp hoặc chứng chỉ nào.</p>
+          } @else {
+            <table class="data-table cert-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Loại giấy tờ</th>
+                  <th>Tên bằng cấp / chứng chỉ</th>
+                  <th>Trạng thái xác minh</th>
+                  <th>Tài liệu</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (cert of certificates(); track cert.id) {
+                  <tr>
+                    <td>#{{ cert.id }}</td>
+                    <td>{{ cert.document_type }}</td>
+                    <td>
+                      <div><strong>{{ cert.document_name }}</strong></div>
+                      @if (cert.rejection_reason) {
+                        <div class="reject-reason">Lý do từ chối: {{ cert.rejection_reason }}</div>
+                      }
+                    </td>
+                    <td>
+                      <span class="verify-badge" [attr.data-verify]="cert.verification_status">
+                        {{ cert.verification_status }}
+                      </span>
+                    </td>
+                    <td>
+                      <a
+                        class="doc-link"
+                        [href]="cert.document_url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Mở tệp
+                      </a>
+                    </td>
+                    <td class="action-group">
+                      <button
+                        type="button"
+                        class="btn-pill btn-approve"
+                        (click)="updateCertificateStatus(cert.id, 'APPROVED')"
+                      >
+                        Duyệt
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-pill btn-reject"
+                        (click)="updateCertificateStatus(cert.id, 'REJECTED')"
+                      >
+                        Từ chối
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+
+        <div class="cert-modal__footer">
+          <button type="button" class="btn-pill btn-neutral" (click)="closeCertificatesPopup()">
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</section>

@@ -1,0 +1,27 @@
+<section class="account-list">
+  @if (!activeRole()) {
+    <app-account-mode-selector
+      [selectedRole]="'CUSTOMER'"
+      (roleChange)="onSelectRole($event)"
+    />
+  } @else {
+    <div class="account-list__topbar">
+      <button
+        type="button"
+        class="btn-back"
+        (click)="backToSelector()"
+        aria-label="Quay lại chọn loại tài khoản"
+        title="Chọn lại loại tài khoản"
+      >
+        <span class="btn-back__arrow" aria-hidden="true">←</span>
+        <span>Chọn lại loại tài khoản</span>
+      </button>
+    </div>
+
+    @if (activeRole() === 'CUSTOMER') {
+      <app-customer-accounts />
+    } @else if (activeRole() === 'CAREGIVER') {
+      <app-caregiver-accounts />
+    }
+  }
+</section>
