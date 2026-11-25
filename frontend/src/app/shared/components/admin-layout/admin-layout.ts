@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 import { Header } from '../header/header';
 import { Sidebar } from '../sidebar/sidebar';
-import { Auth } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-admin-layout',
@@ -13,7 +12,6 @@ import { Auth } from '../../../core/services/auth';
   styleUrl: './admin-layout.scss',
 })
 export class AdminLayout {
-  private auth = inject(Auth);
   private router = inject(Router);
 
   brandTitle = 'Home Care';
@@ -24,7 +22,6 @@ export class AdminLayout {
   }
 
   onLogout(): void {
-    this.auth.logout();
     this.router.navigate(['/login']);
   }
 }
