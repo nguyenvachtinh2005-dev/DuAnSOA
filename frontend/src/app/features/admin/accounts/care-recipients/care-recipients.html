@@ -1,5 +1,10 @@
 <div class="recipients-section">
-  <h4>Danh sách người được chăm sóc ({{ recipients().length }})</h4>
+  <div class="recipients-section__head">
+    <h4>Danh sách người được chăm sóc ({{ recipients().length }})</h4>
+    <button type="button" class="btn-action-smooth" (click)="openAddPopup()">
+      + Thêm người chăm sóc
+    </button>
+  </div>
 
   @if (loading()) {
     <p>Đang tải danh sách người được chăm sóc...</p>
@@ -54,16 +59,25 @@
     </table>
   }
 
-  @if (editingRecipient(); as target) {
-    <div class="doc-modal-backdrop" (click)="closeEditPopup()">
+  @if (popupOpen()) {
+    <div class="doc-modal-backdrop" (click)="closePopup()">
       <div class="doc-modal" (click)="$event.stopPropagation()">
         <div class="doc-modal__head">
           <div>
-            <h3>Chỉnh sửa người được chăm sóc: {{ target.full_name }}</h3>
-            <p>Mã #{{ target.id }}</p>
+            @if (editingRecipient(); as target) {
+              <h3>Chỉnh sửa người được chăm sóc: {{ target.full_name }}</h3>
+              <p>Mã #{{ target.id }}</p>
+            } @else {
+              <h3>Thêm người được chăm sóc</h3>
+              <p>Khách hàng #{{ customerId() }}</p>
+            }
           </div>
-          <button type="button" class="doc-modal__close" (click)="closeEditPopup()">×</button>
+          <button type="button" class="doc-modal__close" (click)="closePopup()">×</button>
         </div>
+
+        @if (formError()) {
+          <p class="error-banner" role="alert">{{ formError() }}</p>
+        }
 
         <div class="profile-form-grid">
           <label>
@@ -130,9 +144,9 @@
 
         <div class="doc-modal__footer">
           <button type="button" class="btn-action-smooth" (click)="saveRecipient()">
-            Lưu
+            {{ editingRecipient() ? 'Lưu' : 'Thêm' }}
           </button>
-          <button type="button" class="btn-action-smooth" (click)="closeEditPopup()">
+          <button type="button" class="btn-action-smooth" (click)="closePopup()">
             Đóng
           </button>
         </div>

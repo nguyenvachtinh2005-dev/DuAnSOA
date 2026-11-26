@@ -9,6 +9,10 @@
         <button type="button" class="doc-modal__close" (click)="close()">×</button>
       </div>
 
+      @if (errorMessage()) {
+        <p class="error-banner" role="alert">{{ errorMessage() }}</p>
+      }
+
       <div class="profile-form-grid">
         <label>
           <span>Họ và tên</span>
@@ -19,12 +23,8 @@
           />
         </label>
         <label>
-          <span>Email</span>
-          <input
-            type="email"
-            [ngModel]="editEmail()"
-            (ngModelChange)="editEmail.set($event)"
-          />
+          <span>Email (tài khoản đăng nhập)</span>
+          <input type="email" [value]="item.email" disabled readonly />
         </label>
         <label>
           <span>Số điện thoại</span>
@@ -32,6 +32,34 @@
             type="text"
             [ngModel]="editPhone()"
             (ngModelChange)="editPhone.set($event)"
+          />
+        </label>
+        <label>
+          <span>Ngày sinh</span>
+          <input
+            type="date"
+            [ngModel]="editDateOfBirth()"
+            (ngModelChange)="editDateOfBirth.set($event)"
+          />
+        </label>
+        <label>
+          <span>Giới tính</span>
+          <select
+            [ngModel]="editGender()"
+            (ngModelChange)="editGender.set($event)"
+          >
+            <option value="">-- Chưa chọn --</option>
+            <option value="MALE">Nam (MALE)</option>
+            <option value="FEMALE">Nữ (FEMALE)</option>
+            <option value="OTHER">Khác (OTHER)</option>
+          </select>
+        </label>
+        <label>
+          <span>Ảnh đại diện (URL)</span>
+          <input
+            type="url"
+            [ngModel]="editAvatarUrl()"
+            (ngModelChange)="editAvatarUrl.set($event)"
           />
         </label>
       </div>
@@ -52,7 +80,9 @@
 
       <app-care-recipients
         [recipients]="recipients()"
+        [customerId]="item.id"
         [loading]="loadingRecipients()"
+        (recipientAdded)="onRecipientAdded($event)"
         (recipientUpdated)="onRecipientUpdated($event)"
         (recipientDeleted)="onRecipientDeleted($event)"
       />

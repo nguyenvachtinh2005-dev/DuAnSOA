@@ -4,35 +4,122 @@
       <div class="doc-modal__head">
         <div>
           <h3>Hồ sơ nhân viên: {{ item.full_name }}</h3>
-          <p>Mã tài khoản #{{ item.id }} · Trạng thái: <strong>{{ item.account_status }}</strong></p>
+          <p>
+            Mã tài khoản #{{ item.id }} · Trạng thái:
+            <strong>{{ item.account_status }}</strong>
+          </p>
         </div>
         <button type="button" class="doc-modal__close" (click)="close()">×</button>
       </div>
 
+      @if (errorMessage()) {
+        <p class="error-banner" role="alert">{{ errorMessage() }}</p>
+      }
+
+      @if (loadingDetail()) {
+        <p>Đang tải chi tiết hồ sơ và giấy tờ...</p>
+      }
+
       <div class="profile-form-grid">
         <label>
           <span>Họ và tên</span>
-          <input type="text" [ngModel]="editFullName()" (ngModelChange)="editFullName.set($event)" />
+          <input
+            type="text"
+            [ngModel]="editFullName()"
+            (ngModelChange)="editFullName.set($event)"
+          />
         </label>
         <label>
-          <span>Email</span>
-          <input type="email" [ngModel]="editEmail()" (ngModelChange)="editEmail.set($event)" />
+          <span>Email (tài khoản đăng nhập)</span>
+          <input type="email" [value]="item.email" disabled readonly />
         </label>
         <label>
           <span>Số điện thoại</span>
-          <input type="text" [ngModel]="editPhone()" (ngModelChange)="editPhone.set($event)" />
+          <input
+            type="text"
+            [ngModel]="editPhone()"
+            (ngModelChange)="editPhone.set($event)"
+          />
+        </label>
+        <label>
+          <span>Ngày sinh</span>
+          <input
+            type="date"
+            [ngModel]="editDateOfBirth()"
+            (ngModelChange)="editDateOfBirth.set($event)"
+          />
+        </label>
+        <label>
+          <span>Giới tính</span>
+          <select
+            [ngModel]="editGender()"
+            (ngModelChange)="editGender.set($event)"
+          >
+            <option value="">-- Chưa chọn --</option>
+            <option value="MALE">Nam (MALE)</option>
+            <option value="FEMALE">Nữ (FEMALE)</option>
+            <option value="OTHER">Khác (OTHER)</option>
+          </select>
+        </label>
+        <label>
+          <span>Ảnh đại diện (URL)</span>
+          <input
+            type="url"
+            [ngModel]="editAvatarUrl()"
+            (ngModelChange)="editAvatarUrl.set($event)"
+          />
         </label>
         <label>
           <span>Trình độ</span>
-          <input type="text" [ngModel]="editQualification()" (ngModelChange)="editQualification.set($event)" />
+          <input
+            type="text"
+            [ngModel]="editQualification()"
+            (ngModelChange)="editQualification.set($event)"
+          />
         </label>
         <label>
           <span>Số CCHN</span>
-          <input type="text" [ngModel]="editLicenseNumber()" (ngModelChange)="editLicenseNumber.set($event)" />
+          <input
+            type="text"
+            [ngModel]="editLicenseNumber()"
+            (ngModelChange)="editLicenseNumber.set($event)"
+          />
         </label>
         <label>
           <span>Kinh nghiệm (năm)</span>
-          <input type="number" min="0" [ngModel]="editExperienceYears()" (ngModelChange)="editExperienceYears.set(+$event)" />
+          <input
+            type="number"
+            min="0"
+            [ngModel]="editExperienceYears()"
+            (ngModelChange)="editExperienceYears.set(+$event)"
+          />
+        </label>
+        <label>
+          <span>Trạng thái xác minh hồ sơ</span>
+          <select
+            [ngModel]="editVerificationStatus()"
+            (ngModelChange)="editVerificationStatus.set($event)"
+          >
+            <option value="PENDING">PENDING</option>
+            <option value="APPROVED">APPROVED</option>
+            <option value="REJECTED">REJECTED</option>
+          </select>
+        </label>
+        <label>
+          <span>Lý do từ chối hồ sơ</span>
+          <input
+            type="text"
+            [ngModel]="editRejectionReason()"
+            (ngModelChange)="editRejectionReason.set($event)"
+          />
+        </label>
+        <label class="profile-form-grid__full">
+          <span>Giới thiệu</span>
+          <textarea
+            rows="3"
+            [ngModel]="editIntroduction()"
+            (ngModelChange)="editIntroduction.set($event)"
+          ></textarea>
         </label>
       </div>
 
@@ -72,6 +159,7 @@
             <th>Loại giấy tờ</th>
             <th>Tên chứng chỉ</th>
             <th>Trạng thái xác minh</th>
+            <th>Lý do từ chối</th>
             <th>Tài liệu</th>
             <th>Thao tác</th>
           </tr>
@@ -92,6 +180,7 @@
                   {{ doc.verification_status === 'REJECTED' ? 'REJECT' : doc.verification_status }}
                 </span>
               </td>
+              <td>{{ doc.rejection_reason || '—' }}</td>
               <td>
                 <a [href]="doc.document_url" target="_blank" rel="noopener noreferrer">Mở tệp</a>
               </td>

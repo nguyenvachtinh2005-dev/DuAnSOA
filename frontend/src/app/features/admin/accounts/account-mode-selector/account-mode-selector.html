@@ -12,6 +12,7 @@
         type="button"
         role="tab"
         class="mode-card"
+        [disabled]="disabled()"
         [class.is-active]="selectedRole() === option.role"
         [attr.aria-selected]="selectedRole() === option.role"
         (click)="selectRole(option.role)"

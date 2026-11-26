@@ -1,5 +1,7 @@
-﻿export type UserRole = 'CUSTOMER' | 'CAREGIVER' | 'ADMIN';
-export type AccountStatus = 'ACTIVE' | 'LOCKED' | 'PENDING';
+﻿import { AccountStatus } from "./account-management.model";
+
+export type { AccountStatus };
+export type UserRole = 'CUSTOMER' | 'CAREGIVER' | 'ADMIN';
 
 export interface LoginRequest {
   email: string;

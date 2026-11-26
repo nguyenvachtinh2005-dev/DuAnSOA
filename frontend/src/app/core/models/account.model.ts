@@ -1,4 +1,4 @@
-﻿import { AccountStatus, UserRole } from './auth.model';
+﻿import { AccountStatus, UserRole } from '../models';
 
 export type Gender = 'MALE' | 'FEMALE' | 'OTHER';
 

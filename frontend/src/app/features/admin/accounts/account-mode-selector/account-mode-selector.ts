@@ -13,6 +13,7 @@ export class AccountModeSelector {
   readonly selectedRole = input<AccountRole>('CUSTOMER');
   readonly customerCount = input<number | null>(null);
   readonly caregiverCount = input<number | null>(null);
+  readonly disabled = input<boolean>(false);
 
   readonly roleChange = output<AccountRole>();
 
@@ -34,6 +35,9 @@ export class AccountModeSelector {
   ];
 
   selectRole(role: AccountRole): void {
+    if (this.disabled()) {
+      return;
+    }
     this.roleChange.emit(role);
   }
 

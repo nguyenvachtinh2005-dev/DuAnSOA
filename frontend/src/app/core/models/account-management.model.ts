@@ -5,20 +5,21 @@ export type VerificationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export interface AccountOverviewItem {
   id: number;
   email: string;
-  role: AccountRole;
-  account_status: AccountStatus;
+  role: 'CUSTOMER' | 'CAREGIVER' | 'ADMIN';
+  account_status: 'ACTIVE' | 'LOCKED' | 'PENDING';
   email_verified: boolean;
   last_login_at: string | null;
   created_at: string;
   full_name: string;
   phone: string | null;
-  // Riêng cho nhân viên chăm sóc y tế (caregiver_profiles)
-  qualification?: string | null;
-  experience_years?: number;
-  license_number?: string | null;
-  verification_status?: VerificationStatus;
-  // Riêng cho khách hàng (care_recipients)
+  date_of_birth?: string | null;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER' | null;
+  avatar_url?: string | null;
   recipients_count?: number;
+  qualification?: string | null;
+  experience_years?: number | null;
+  license_number?: string | null;
+  verification_status?: 'PENDING' | 'APPROVED' | 'REJECTED' | null;
 }
 
 export interface AccountModeOption {
@@ -39,7 +40,18 @@ export interface AccountStatusUpdateResult {
   id: number;
   account_status: AccountStatus;
 }
+export type CreateCareRecipientPayload = Omit<CareRecipientItem, 'id'>;
 
+export type UpdateCareRecipientPayload = Partial<
+  Omit<CareRecipientItem, 'id' | 'customer_id'>
+>;
+
+export type UpdateAccountProfilePayload = Partial<
+  Pick<
+    AccountOverviewItem,
+    'full_name' | 'phone' | 'date_of_birth' | 'gender' | 'avatar_url'
+  >
+>;
 export interface CareRecipientItem {
   id: number;
   customer_id: number;

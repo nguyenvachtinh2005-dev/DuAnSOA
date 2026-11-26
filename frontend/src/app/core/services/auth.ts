@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, tap, throwError } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { LoginData, LoginRequest } from '../models/auth.model';
 import { ApiResponse } from '../models/api.model';
-import { findMockAdmin } from '../mocks/mock-admin.data';
+import { decodeJwtPayload } from './admin-access.util';
 
 export type LoginApiResult = LoginData | ApiResponse<LoginData>;
 
@@ -11,50 +11,21 @@ export type LoginApiResult = LoginData | ApiResponse<LoginData>;
   providedIn: 'root',
 })
 export class Auth {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
-  private readonly enableMockAdmin = true;
-
-  // Port 3001 theo Authentication Service trong soa_homecare_db (hoặc đổi sang URL gateway)
-  private readonly apiUrl = 'http://localhost:3001/api/auth';
+  // Đi qua API Gateway (đổi sang '/api/gateway/auth' hoặc base URL gateway nếu cần)
+  private readonly apiUrl = '/api/auth';
   private readonly tokenKey = 'soa_admin_token';
   private readonly roleKey = 'soa_admin_role';
 
   login(payload: LoginRequest): Observable<LoginApiResult> {
-    if (this.enableMockAdmin) {
-      const mockAdmin = findMockAdmin(payload.email, payload.password);
-      if (!mockAdmin) {
-        return throwError(() => ({
-          error: { message: 'Email hoặc mật khẩu không chính xác.' },
-        }));
-      }
-
-      this.setSession(mockAdmin.token, mockAdmin.role);
-
-      const mockResponse: ApiResponse<LoginData> = {
-        success: true,
-        message: 'Đăng nhập mock thành công',
-        data: {
-          token: mockAdmin.token,
-          role: mockAdmin.role,
-          user: {
-            id: mockAdmin.id,
-            email: mockAdmin.email,
-            fullName: mockAdmin.fullName,
-            role: mockAdmin.role,
-            account_status: mockAdmin.status,
-          },
-        } as LoginData,
-      };
-
-      return of(mockResponse);
-    }
     return this.http.post<LoginApiResult>(`${this.apiUrl}/login`, payload).pipe(
       tap((res) => {
         const data = this.extractLoginData(res);
         const token = data?.token ?? data?.accessToken;
+        const role = data?.role ?? data?.user?.role;
         if (token) {
-          localStorage.setItem(this.tokenKey, token);
+          this.setSession(token, role);
         }
       })
     );
@@ -64,6 +35,8 @@ export class Auth {
     localStorage.setItem(this.tokenKey, token);
     if (role) {
       localStorage.setItem(this.roleKey, role.toUpperCase());
+    } else {
+      localStorage.removeItem(this.roleKey);
     }
   }
 
@@ -91,8 +64,31 @@ export class Auth {
 
   isAdminAuthenticated(): boolean {
     const token = this.getToken();
-    const role = this.getRole();
-    return Boolean(token && token.trim().length > 0 && role === 'ADMIN');
+    const storedRole = this.getRole()?.toUpperCase();
+
+    if (!token || token.trim().length === 0) {
+      this.logout();
+      return false;
+    }
+
+    const claims = decodeJwtPayload(token);
+    if (!claims) {
+      this.logout();
+      return false;
+    }
+
+    if (typeof claims.exp === 'number' && Date.now() >= claims.exp * 1000) {
+      this.logout();
+      return false;
+    }
+
+    const effectiveRole = (claims.role ?? storedRole)?.toUpperCase();
+    if (effectiveRole !== 'ADMIN') {
+      this.logout();
+      return false;
+    }
+
+    return true;
   }
 
   logout(): void {

@@ -55,8 +55,10 @@
         <option value="LOCKED">LOCKED</option>
       </select>
     </div>
-
-    @if (loading()) {
+    
+    @if (errorMessage()) {
+      <p class="error-banner" role="alert">{{ errorMessage() }}</p>
+    } @else if (loading()) {
       <p>Đang tải danh sách tài khoản...</p>
     } @else if (accounts().length === 0) {
       <p>Không có tài khoản phù hợp.</p>

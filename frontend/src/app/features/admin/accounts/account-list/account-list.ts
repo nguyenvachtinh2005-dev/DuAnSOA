@@ -7,7 +7,7 @@ import {
   AccountRole,
   AccountStatus,
 } from '../../../../core/models/account-management.model';
-import { AccountsService } from '../accounts.service';
+import { AccountsService } from '../../../../core/services/accounts.service/accounts.service';
 import { AccountModeSelector } from '../account-mode-selector/account-mode-selector';
 import { CustomerAccounts } from '../customer-accounts/customer-accounts';
 import { CaregiverAccounts } from '../caregiver-accounts/caregiver-accounts';
@@ -33,6 +33,7 @@ export class AccountList implements OnInit, OnDestroy {
   readonly selectedCustomer = signal<AccountOverviewItem | null>(null);
   readonly selectedCaregiver = signal<AccountOverviewItem | null>(null);
   readonly pendingDocCaregiverIds = signal<Set<number>>(new Set());
+  readonly errorMessage = signal<string | null>(null);
 
   ngOnInit(): void {
     this.searchSub = this.searchSubject
@@ -77,6 +78,8 @@ export class AccountList implements OnInit, OnDestroy {
     if (!role) return;
 
     this.loading.set(true);
+    this.errorMessage.set(null);
+
     this.accountsService
       .getAccounts({
         role,
@@ -91,9 +94,12 @@ export class AccountList implements OnInit, OnDestroy {
             this.refreshCaregiverPendingFlags(list);
           }
         },
-        error: () => {
+        error: (err: unknown) => {
           this.accounts.set([]);
           this.loading.set(false);
+          this.errorMessage.set(
+            err instanceof Error ? err.message : 'Không thể tải danh sách tài khoản.'
+          );
         },
       });
   }
