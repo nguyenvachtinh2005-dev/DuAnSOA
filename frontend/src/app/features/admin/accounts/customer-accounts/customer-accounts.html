@@ -1,0 +1,118 @@
+@if (customer(); as item) {
+  <div class="doc-modal-backdrop" (click)="close()">
+    <div class="doc-modal" (click)="$event.stopPropagation()">
+      <div class="doc-modal__head">
+        <div>
+          <h3>Hồ sơ khách hàng: {{ item.full_name }}</h3>
+          <p>Mã tài khoản #{{ item.id }}</p>
+        </div>
+        <button type="button" class="doc-modal__close" (click)="close()">×</button>
+      </div>
+
+      @if (errorMessage()) {
+        <p class="error-banner" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <div class="profile-form-grid">
+        <label>
+          <span>Họ và tên</span>
+          <input
+            type="text"
+            [ngModel]="editFullName()"
+            (ngModelChange)="editFullName.set($event)"
+          />
+        </label>
+        <label>
+          <span>Email (tài khoản đăng nhập)</span>
+          <input type="email" [value]="item.email" disabled readonly />
+        </label>
+        <label>
+          <span>Số điện thoại</span>
+          <input
+            type="text"
+            [ngModel]="editPhone()"
+            (ngModelChange)="editPhone.set($event)"
+          />
+        </label>
+        <label>
+          <span>Ngày sinh</span>
+          <input
+            type="date"
+            [ngModel]="editDateOfBirth()"
+            (ngModelChange)="editDateOfBirth.set($event)"
+          />
+        </label>
+        <label>
+          <span>Giới tính</span>
+          <select
+            [ngModel]="editGender()"
+            (ngModelChange)="editGender.set($event)"
+          >
+            <option value="">-- Chưa chọn --</option>
+            <option value="MALE">Nam (MALE)</option>
+            <option value="FEMALE">Nữ (FEMALE)</option>
+            <option value="OTHER">Khác (OTHER)</option>
+          </select>
+        </label>
+        <label>
+          <span>Ảnh đại diện (URL)</span>
+          <input
+            type="url"
+            [ngModel]="editAvatarUrl()"
+            (ngModelChange)="editAvatarUrl.set($event)"
+          />
+        </label>
+      </div>
+
+      <div class="profile-detail">
+        <div>
+          <span>Trạng thái tài khoản:</span>
+          <span
+            class="status-badge"
+            [class.status-badge--active]="item.account_status === 'ACTIVE'"
+            [class.status-badge--pending]="item.account_status === 'PENDING'"
+            [class.status-badge--locked]="item.account_status === 'LOCKED'"
+          >
+            {{ item.account_status }}
+          </span>
+        </div>
+      </div>
+
+      <app-care-recipients
+        [recipients]="recipients()"
+        [customerId]="item.id"
+        [loading]="loadingRecipients()"
+        (recipientAdded)="onRecipientAdded($event)"
+        (recipientUpdated)="onRecipientUpdated($event)"
+        (recipientDeleted)="onRecipientDeleted($event)"
+      />
+
+      <div class="doc-modal__footer">
+        <button type="button" class="btn-action-smooth" (click)="saveProfile(item)">
+          Lưu hồ sơ
+        </button>
+        @if (item.account_status === 'LOCKED') {
+          <button type="button" class="btn-action-smooth" (click)="toggleLock(item)">
+            Mở khoá tài khoản
+          </button>
+          <button
+            type="button"
+            class="btn-action-smooth btn-action-smooth--danger"
+            (click)="deleteLocked(item)"
+          >
+            Xoá tài khoản
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="btn-action-smooth btn-action-smooth--danger"
+            (click)="toggleLock(item)"
+          >
+            Khoá tài khoản
+          </button>
+        }
+        <button type="button" class="btn-action-smooth" (click)="close()">Đóng</button>
+      </div>
+    </div>
+  </div>
+}

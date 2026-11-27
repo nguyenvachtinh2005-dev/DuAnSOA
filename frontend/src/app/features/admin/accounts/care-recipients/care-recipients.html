@@ -1,0 +1,156 @@
+<div class="recipients-section">
+  <div class="recipients-section__head">
+    <h4>Danh sách người được chăm sóc ({{ recipients().length }})</h4>
+    <button type="button" class="btn-action-smooth" (click)="openAddPopup()">
+      + Thêm người chăm sóc
+    </button>
+  </div>
+
+  @if (loading()) {
+    <p>Đang tải danh sách người được chăm sóc...</p>
+  } @else if (recipients().length === 0) {
+    <p>Chưa có người được chăm sóc.</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Họ tên</th>
+          <th>Quan hệ</th>
+          <th>Ngày sinh</th>
+          <th>Giới tính</th>
+          <th>Ghi chú y tế</th>
+          <th>Liên hệ khẩn cấp</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (rec of recipients(); track rec.id) {
+          <tr>
+            <td><strong>{{ rec.full_name }}</strong></td>
+            <td>{{ rec.relationship }}</td>
+            <td>{{ rec.date_of_birth || '—' }}</td>
+            <td>{{ formatGender(rec.gender) }}</td>
+            <td>{{ rec.medical_notes || '—' }}</td>
+            <td>
+              <div>{{ rec.emergency_contact_name || '—' }}</div>
+              <small>{{ rec.emergency_contact_phone || '' }}</small>
+            </td>
+            <td>
+              <div class="doc-actions">
+                <button
+                  type="button"
+                  class="btn-action-smooth"
+                  (click)="openEditPopup(rec)"
+                >
+                  Sửa
+                </button>
+                <button
+                  type="button"
+                  class="btn-action-smooth btn-action-smooth--danger"
+                  (click)="deleteRecipient(rec)"
+                >
+                  Xoá
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  @if (popupOpen()) {
+    <div class="doc-modal-backdrop" (click)="closePopup()">
+      <div class="doc-modal" (click)="$event.stopPropagation()">
+        <div class="doc-modal__head">
+          <div>
+            @if (editingRecipient(); as target) {
+              <h3>Chỉnh sửa người được chăm sóc: {{ target.full_name }}</h3>
+              <p>Mã #{{ target.id }}</p>
+            } @else {
+              <h3>Thêm người được chăm sóc</h3>
+              <p>Khách hàng #{{ customerId() }}</p>
+            }
+          </div>
+          <button type="button" class="doc-modal__close" (click)="closePopup()">×</button>
+        </div>
+
+        @if (formError()) {
+          <p class="error-banner" role="alert">{{ formError() }}</p>
+        }
+
+        <div class="profile-form-grid">
+          <label>
+            <span>Họ và tên</span>
+            <input
+              type="text"
+              [ngModel]="editFullName()"
+              (ngModelChange)="editFullName.set($event)"
+            />
+          </label>
+          <label>
+            <span>Mối quan hệ</span>
+            <input
+              type="text"
+              [ngModel]="editRelationship()"
+              (ngModelChange)="editRelationship.set($event)"
+            />
+          </label>
+          <label>
+            <span>Ngày sinh</span>
+            <input
+              type="date"
+              [ngModel]="editDateOfBirth()"
+              (ngModelChange)="editDateOfBirth.set($event)"
+            />
+          </label>
+          <label>
+            <span>Giới tính</span>
+            <select
+              [ngModel]="editGender()"
+              (ngModelChange)="editGender.set($event)"
+            >
+              <option value="">— Chưa chọn —</option>
+              <option value="MALE">Nam</option>
+              <option value="FEMALE">Nữ</option>
+              <option value="OTHER">Khác</option>
+            </select>
+          </label>
+          <label>
+            <span>Người liên hệ khẩn cấp</span>
+            <input
+              type="text"
+              [ngModel]="editEmergencyName()"
+              (ngModelChange)="editEmergencyName.set($event)"
+            />
+          </label>
+          <label>
+            <span>SĐT liên hệ khẩn cấp</span>
+            <input
+              type="text"
+              [ngModel]="editEmergencyPhone()"
+              (ngModelChange)="editEmergencyPhone.set($event)"
+            />
+          </label>
+          <label class="profile-form-grid__full">
+            <span>Ghi chú y tế</span>
+            <textarea
+              rows="3"
+              [ngModel]="editMedicalNotes()"
+              (ngModelChange)="editMedicalNotes.set($event)"
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="doc-modal__footer">
+          <button type="button" class="btn-action-smooth" (click)="saveRecipient()">
+            {{ editingRecipient() ? 'Lưu' : 'Thêm' }}
+          </button>
+          <button type="button" class="btn-action-smooth" (click)="closePopup()">
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

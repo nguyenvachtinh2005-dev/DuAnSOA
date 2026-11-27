@@ -1,0 +1,45 @@
+@if (config(); as cfg) {
+  <div
+    class="confirm-backdrop"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="cfg.title"
+    (click)="onCancel()"
+  >
+    <div class="confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-modal__header">
+        <h3 class="confirm-modal__title">{{ cfg.title }}</h3>
+        <button
+          type="button"
+          class="confirm-modal__close"
+          aria-label="Đóng hộp thoại"
+          (click)="onCancel()"
+        >
+          ×
+        </button>
+      </div>
+
+      <p class="confirm-modal__message">{{ cfg.message }}</p>
+
+      <div class="confirm-modal__actions">
+        <button
+          type="button"
+          class="btn-cancel"
+          (click)="onCancel()"
+        >
+          {{ cfg.cancelText ?? 'Huỷ' }}
+        </button>
+        <button
+          type="button"
+          class="btn-confirm"
+          [class.btn-confirm--danger]="(cfg.variant ?? 'primary') === 'danger'"
+          [class.btn-confirm--warning]="cfg.variant === 'warning'"
+          [class.btn-confirm--primary]="(cfg.variant ?? 'primary') === 'primary'"
+          (click)="onConfirm()"
+        >
+          {{ cfg.confirmText ?? 'Xác nhận' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

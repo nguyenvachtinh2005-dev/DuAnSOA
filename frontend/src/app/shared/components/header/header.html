@@ -1,0 +1,33 @@
+<header class="app-header">
+  <div class="header-left">
+    <button
+      *ngIf="showMenuToggle()"
+      type="button"
+      class="menu-btn"
+      aria-label="Mở hoặc thu gọn thanh điều hướng"
+      (click)="menuToggle.emit()"
+    >
+      ☰
+    </button>
+
+    <a routerLink="/admin/dashboard" class="brand-link">
+      <span class="brand-plus">+</span>
+      <span class="brand-text">{{ brandTitle() }}</span>
+    </a>
+  </div>
+
+  <div class="header-right" *ngIf="showProfile()">
+    <button type="button" class="notify-btn" title="Thông báo" aria-label="Thông báo">
+      <span>🔔</span>
+      <span class="notify-dot"></span>
+    </button>
+
+    <div class="user-box">
+      <span class="user-avatar">A</span>
+      <div class="user-info">
+        <span class="user-name">{{ userName() }}</span>
+        <span class="user-role">{{ userRole() }}</span>
+      </div>
+    </div>
+  </div>
+</header>
